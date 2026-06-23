@@ -4,9 +4,11 @@ services:
     image: jdreview:latest
     container_name: jdreview-app
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
+    # .env 可选：没有也能启动，AI 直接在网页 ⚙ 配置里设置（持久化到挂载卷）
     env_file:
-      - backend/.env
+      - path: backend/.env
+        required: false
     # 简历库挂载到宿主机，容器重建后数据不丢
     volumes:
       - ./backend/data:/app/backend/data

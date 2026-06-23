@@ -14,6 +14,16 @@ class Resume(BaseModel):
     experience: str = ""            # 经历正文
 
 
+class SettingsUpdate(BaseModel):
+    """前端配置面板提交的字段，均可选；bailian_api_key 留空表示不修改。"""
+    provider: Optional[str] = None          # bailian | ollama
+    bailian_api_key: Optional[str] = None
+    bailian_base_url: Optional[str] = None
+    bailian_model: Optional[str] = None
+    ollama_base_url: Optional[str] = None
+    ollama_model: Optional[str] = None
+
+
 class RecommendRequest(BaseModel):
     jd: str = Field(..., description="岗位需求 / JD 文本")
     top_n: int = Field(5, ge=1, le=20)

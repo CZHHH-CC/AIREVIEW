@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import config, store
-from .models import RecommendRequest, RecommendResponse, Resume
+from . import config, llm, store
+from .models import RecommendRequest, RecommendResponse, Resume, SettingsUpdate
 from .recommender import recommend
 
 app = FastAPI(title="JDReview · AI 简历推荐", version="0.1.0")
@@ -26,8 +26,26 @@ def health():
 
 @app.get("/api/config")
 def get_config():
-    """前端用来展示当前 AI 提供方/模型。"""
+    """前端顶部徽标：当前 AI 提供方/模型。"""
     return config.provider_info()
+
+
+@app.get("/api/settings")
+def get_settings():
+    """配置面板回显（不含密钥明文）。"""
+    return config.editable_settings()
+
+
+@app.put("/api/settings")
+def put_settings(patch: SettingsUpdate):
+    """前端保存 AI 配置，立即生效并持久化。"""
+    return config.update_settings(patch.model_dump(exclude_none=True))
+
+
+@app.post("/api/settings/test")
+def test_settings():
+    """用当前配置测试连接。"""
+    return llm.test_connection()
 
 
 @app.get("/api/resumes")

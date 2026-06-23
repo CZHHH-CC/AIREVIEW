@@ -67,7 +67,7 @@ def recommend(jd: str, top_n: int = 5) -> RecommendResponse:
 
     if not resumes:
         return RecommendResponse(
-            provider=config.PROVIDER,
+            provider=config.provider(),
             model=config.active_model(),
             overall="简历库为空，请先导入简历。",
             recommendations=[],

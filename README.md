@@ -61,24 +61,31 @@ uvicorn app.main:app --reload --port 8000
 
 ## 容器化部署（Docker）
 
-```bash
-# 1. 准备环境变量（密钥不会进镜像，运行时注入）
-copy backend\.env.example backend\.env   # 填好 DASHSCOPE_API_KEY 或切 ollama
+拉下源码即可一键启动，**无需任何配置文件**——AI 引擎在网页里设置：
 
-# 2. 构建并启动
+```bash
+git clone https://github.com/CZHHH-CC/AIREVIEW.git
+cd AIREVIEW
 docker compose up -d --build
-# 打开 http://localhost:8000
+# 打开 http://localhost:8000，点右上角「⚙ 配置」填入百炼 API Key 或切 Ollama
 ```
 
-**用容器内的 Ollama（无需百炼密钥）：**
+> 配置会持久化到挂载卷 `./backend/data/settings.json`，容器重建不丢；
+> 简历库 `./backend/data/resumes.json` 同样挂载持久化。
+> 8000 端口被占用时：`APP_PORT=8080 docker compose up -d`（Windows PowerShell：`$env:APP_PORT=8080; docker compose up -d`）。
+
+**可选——也可用 `.env` 预置密钥**（适合自动化部署）：
+```bash
+cp backend/.env.example backend/.env   # 填 DASHSCOPE_API_KEY 或切 ollama
+docker compose up -d --build
+```
+
+**可选——用容器内的 Ollama（无需百炼密钥）：**
 ```bash
 docker compose --profile ollama up -d --build
 docker compose exec ollama ollama pull qwen2.5
-# backend/.env 设: LLM_PROVIDER=ollama  OLLAMA_BASE_URL=http://ollama:11434/v1
-docker compose restart app
+# 网页 ⚙ 配置切到 Ollama，Base URL 填 http://ollama:11434/v1
 ```
-
-简历库通过 volume 挂载到 `./backend/data`，容器重建数据不丢。
 
 ## 切换引擎
 

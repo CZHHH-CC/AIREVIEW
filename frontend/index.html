@@ -66,20 +66,124 @@
     details p { font-size: 13px; color: var(--muted); line-height: 1.6; }
     .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff5; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    button.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); padding: 8px 14px; border-radius: 9px; font-size: 13px; cursor: pointer; }
+    button.ghost:hover { border-color: var(--brand); }
+    button.ghost:disabled { opacity: .5; cursor: not-allowed; }
+    .modal-mask { position: fixed; inset: 0; background: rgba(6,8,18,.65); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+    .modal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; width: min(480px, 92vw); }
+    .modal h3 { margin: 0 0 14px; }
+    .modal label { display: block; margin: 12px 0 5px; }
+    .modal input { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 14px; }
+    .modal input:focus { outline: none; border-color: var(--brand); }
+    .seg { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 10px; border: 1px solid var(--line); }
+    .seg button { flex: 1; background: transparent; color: var(--muted); border: none; padding: 9px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+    .seg button.active { background: var(--card2); color: var(--text); font-weight: 600; }
+    .modal-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+    .test { margin-top: 14px; font-size: 13px; word-break: break-all; }
+    .tabs { display: flex; gap: 8px; margin-top: 20px; }
+    .tabs button { background: var(--card); color: var(--muted); border: 1px solid var(--line); padding: 9px 18px; border-radius: 10px; font-size: 14px; cursor: pointer; }
+    .tabs button.active { background: var(--card2); color: var(--text); border-color: var(--brand); font-weight: 600; }
+    button.del { background: transparent; color: var(--muted); border: 1px solid var(--line); width: 26px; height: 26px; border-radius: 7px; cursor: pointer; line-height: 1; }
+    button.del:hover { color: var(--bad); border-color: var(--bad); }
   </style>
 </head>
 <body>
 <div id="app" class="wrap">
   <header>
     <h1>JD<span>Review</span> · AI 简历推荐</h1>
-    <div class="badge" v-if="cfg">
-      <span class="dot" :style="{background: cfg.ready ? 'var(--ok)' : 'var(--bad)'}"></span>
-      引擎 <b>{{ cfg.provider }}</b> · 模型 <b>{{ cfg.model }}</b>
-      <span v-if="!cfg.ready"> · ⚠ 未配置密钥</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="badge" v-if="cfg">
+        <span class="dot" :style="{background: cfg.ready ? 'var(--ok)' : 'var(--bad)'}"></span>
+        引擎 <b>{{ cfg.provider }}</b> · 模型 <b>{{ cfg.model }}</b>
+        <span v-if="!cfg.ready"> · ⚠ 未配置密钥</span>
+      </div>
+      <button class="ghost" @click="openSettings">⚙ 配置</button>
     </div>
   </header>
 
-  <div class="panel">
+  <!-- AI 配置面板 -->
+  <div class="modal-mask" v-if="showSettings" @click.self="showSettings=false">
+    <div class="modal">
+      <h3>AI 引擎配置</h3>
+      <div class="seg">
+        <button :class="{active: settings.provider==='bailian'}" @click="settings.provider='bailian'">阿里云百炼</button>
+        <button :class="{active: settings.provider==='ollama'}" @click="settings.provider='ollama'">Ollama 本地</button>
+      </div>
+
+      <template v-if="settings.provider==='bailian'">
+        <label>API Key（DashScope）</label>
+        <input type="password" v-model="settings.bailian_api_key"
+               :placeholder="settings.bailian_has_key ? '已配置，留空则不修改' : 'sk-...'" />
+        <label>模型</label>
+        <input type="text" v-model="settings.bailian_model" placeholder="qwen-plus / qwen-max" />
+        <label>Base URL</label>
+        <input type="text" v-model="settings.bailian_base_url" />
+      </template>
+      <template v-else>
+        <label>模型</label>
+        <input type="text" v-model="settings.ollama_model" placeholder="qwen2.5 / llama3.1" />
+        <label>Base URL</label>
+        <input type="text" v-model="settings.ollama_base_url" placeholder="http://localhost:11434/v1" />
+      </template>
+
+      <div class="test" v-if="testResult"
+           :style="{color: testResult.ok ? 'var(--ok)' : 'var(--bad)'}">
+        {{ testResult.ok ? '✅ 连接成功（' + testResult.model + '）' : '❌ ' + testResult.error }}
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" @click="testConn" :disabled="savingSettings">
+          <span v-if="testing" class="spinner"></span>测试连接
+        </button>
+        <div class="grow"></div>
+        <button class="ghost" @click="showSettings=false">取消</button>
+        <button class="primary" @click="saveSettings" :disabled="savingSettings">
+          <span v-if="savingSettings" class="spinner"></span>保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标签页 -->
+  <div class="tabs">
+    <button :class="{active: view==='recommend'}" @click="view='recommend'">✨ 智能推荐</button>
+    <button :class="{active: view==='resumes'}" @click="switchToResumes">📂 简历库 ({{ resumeCount }})</button>
+  </div>
+
+  <!-- 简历库视图 -->
+  <div class="panel" v-show="view==='resumes'">
+    <div class="row" style="margin-top:0; justify-content:space-between;">
+      <b style="font-size:15px;">简历库 · 共 {{ resumes.length }} 份</b>
+      <button class="ghost" @click="loadResumes" :disabled="resumesLoading">
+        <span v-if="resumesLoading" class="spinner"></span>刷新
+      </button>
+    </div>
+    <div class="cards" style="margin-top:14px;">
+      <div class="cand" v-for="r in resumes" :key="r.id">
+        <div class="cand-top">
+          <div class="who">
+            <b>{{ r.name }}</b>
+            <div class="meta">{{ r.title || '—' }} · {{ r.years }}年 · {{ r.education || '—' }}</div>
+          </div>
+          <div class="score" style="display:flex; align-items:center; gap:10px;">
+            <span class="tag">id: {{ r.id }}</span>
+            <button class="del" title="删除" @click="removeResume(r)">✕</button>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag" v-for="s in r.skills" :key="s">{{ s }}</span>
+        </div>
+        <div class="ai-sum" v-if="r.summary">“{{ r.summary }}”</div>
+        <details v-if="r.experience">
+          <summary>查看完整经历</summary>
+          <p>{{ r.experience }}</p>
+        </details>
+      </div>
+    </div>
+    <div class="hint" v-if="!resumes.length && !resumesLoading">简历库为空。</div>
+  </div>
+
+  <div class="panel" v-show="view==='recommend'">
     <label>岗位需求 / JD</label>
     <textarea v-model="jd" placeholder="粘贴岗位描述，例如：&#10;招聘高级后端工程师，5年以上经验，精通 Java/Spring Boot 与微服务，有高并发电商系统经验，熟悉 Kafka、Redis……"></textarea>
     <div class="row">
@@ -100,7 +204,7 @@
     <div class="err" v-if="error">{{ error }}</div>
   </div>
 
-  <div class="panel" v-if="result">
+  <div class="panel" v-if="result && view==='recommend'">
     <div class="overall" v-if="result.overall">📋 {{ result.overall }}</div>
     <div class="cards">
       <div class="cand" v-for="(c, i) in result.recommendations" :key="c.resume_id">
@@ -145,17 +249,74 @@
 const { createApp } = Vue;
 createApp({
   data() {
-    return { jd: '', topN: 5, loading: false, error: '', result: null, cfg: null, resumeCount: 0 };
+    return {
+      jd: '', topN: 5, loading: false, error: '', result: null, cfg: null, resumeCount: 0,
+      showSettings: false, settings: {}, savingSettings: false, testing: false, testResult: null,
+      view: 'recommend', resumes: [], resumesLoading: false
+    };
   },
   async mounted() {
-    try {
-      this.cfg = await (await fetch('/api/config')).json();
-      const list = await (await fetch('/api/resumes')).json();
-      this.resumeCount = list.length;
-    } catch (e) { /* 后端未启动时静默 */ }
+    await this.refreshCfg();
+    await this.loadResumes();
   },
   methods: {
     scoreColor(s) { return s >= 80 ? 'var(--ok)' : s >= 60 ? 'var(--warn)' : 'var(--bad)'; },
+    async refreshCfg() {
+      try { this.cfg = await (await fetch('/api/config')).json(); } catch (e) {}
+    },
+    async loadResumes() {
+      this.resumesLoading = true;
+      try {
+        this.resumes = await (await fetch('/api/resumes')).json();
+        this.resumeCount = this.resumes.length;
+      } catch (e) { /* 后端未启动时静默 */ }
+      finally { this.resumesLoading = false; }
+    },
+    switchToResumes() {
+      this.view = 'resumes';
+      if (!this.resumes.length) this.loadResumes();
+    },
+    async removeResume(r) {
+      if (!confirm('确定删除「' + r.name + '」？')) return;
+      try {
+        await fetch('/api/resumes/' + r.id, { method: 'DELETE' });
+        await this.loadResumes();
+      } catch (e) { this.error = '删除失败：' + e.message; }
+    },
+    async openSettings() {
+      this.testResult = null;
+      try {
+        this.settings = await (await fetch('/api/settings')).json();
+        this.settings.bailian_api_key = '';
+        this.showSettings = true;
+      } catch (e) { this.error = '读取配置失败：' + e.message; }
+    },
+    async saveSettings() {
+      this.savingSettings = true;
+      try {
+        await fetch('/api/settings', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.settings)
+        });
+        await this.refreshCfg();
+        this.showSettings = false;
+      } catch (e) { this.error = '保存失败：' + e.message; }
+      finally { this.savingSettings = false; }
+    },
+    async testConn() {
+      this.testing = true; this.testResult = null;
+      try {
+        // 先保存当前填写，再测试，保证测的是最新配置
+        await fetch('/api/settings', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.settings)
+        });
+        this.settings.bailian_api_key = '';
+        await this.refreshCfg();
+        this.testResult = await (await fetch('/api/settings/test', { method: 'POST' })).json();
+      } catch (e) { this.testResult = { ok: false, error: e.message }; }
+      finally { this.testing = false; }
+    },
     async run() {
       this.loading = true; this.error = ''; this.result = null;
       try {
