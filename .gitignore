@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# 环境密钥（绝不提交）
+backend/.env
+.env
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

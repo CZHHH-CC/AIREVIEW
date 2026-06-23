@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JDReview · AI 简历推荐</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      --bg: #0f1220; --card: #1a1f35; --card2: #232a45;
+      --text: #e8ebf5; --muted: #9aa3c0; --line: #2c334e;
+      --brand: #6c8cff; --brand2: #8a6cff;
+      --ok: #34d399; --warn: #fbbf24; --bad: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(1200px 600px at 80% -10%, #20264a 0%, var(--bg) 55%);
+      color: var(--text); min-height: 100vh;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    h1 { font-size: 22px; margin: 0; letter-spacing: .5px; }
+    h1 span { background: linear-gradient(90deg, var(--brand), var(--brand2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .badge { font-size: 12px; color: var(--muted); background: var(--card); border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; }
+    .badge b { color: var(--text); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-top: 20px; }
+    textarea {
+      width: 100%; min-height: 150px; resize: vertical; background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 14px; line-height: 1.6;
+    }
+    textarea:focus { outline: none; border-color: var(--brand); }
+    .row { display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+    .grow { flex: 1; }
+    label { font-size: 13px; color: var(--muted); }
+    select, input[type=number] { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+    button.primary {
+      background: linear-gradient(90deg, var(--brand), var(--brand2)); color: #fff; border: none;
+      padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    button.primary:disabled { opacity: .5; cursor: not-allowed; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .overall { background: var(--card2); border-left: 3px solid var(--brand); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+    .cards { display: grid; gap: 14px; }
+    .cand { background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .cand-top { display: flex; align-items: center; gap: 12px; }
+    .rank { width: 30px; height: 30px; border-radius: 8px; background: var(--card); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--brand); border: 1px solid var(--line); }
+    .who b { font-size: 16px; }
+    .who .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .score { margin-left: auto; text-align: right; }
+    .score .num { font-size: 26px; font-weight: 800; }
+    .bar { height: 6px; width: 90px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand2)); }
+    .tags { margin: 12px 0 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 11px; padding: 3px 9px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--muted); }
+    .sec { margin-top: 10px; font-size: 13px; }
+    .sec .t { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    ul.reasons { margin: 0; padding-left: 18px; }
+    ul.reasons.ok li::marker { color: var(--ok); }
+    ul.reasons.gap li::marker { color: var(--warn); }
+    ul.reasons li { margin: 3px 0; }
+    .ai-sum { font-style: italic; color: var(--text); margin-top: 8px; opacity: .9; }
+    .err { color: var(--bad); margin-top: 12px; font-size: 14px; }
+    details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 10px; }
+    details p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff5; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="app" class="wrap">
+  <header>
+    <h1>JD<span>Review</span> · AI 简历推荐</h1>
+    <div class="badge" v-if="cfg">
+      <span class="dot" :style="{background: cfg.ready ? 'var(--ok)' : 'var(--bad)'}"></span>
+      引擎 <b>{{ cfg.provider }}</b> · 模型 <b>{{ cfg.model }}</b>
+      <span v-if="!cfg.ready"> · ⚠ 未配置密钥</span>
+    </div>
+  </header>
+
+  <div class="panel">
+    <label>岗位需求 / JD</label>
+    <textarea v-model="jd" placeholder="粘贴岗位描述，例如：&#10;招聘高级后端工程师，5年以上经验，精通 Java/Spring Boot 与微服务，有高并发电商系统经验，熟悉 Kafka、Redis……"></textarea>
+    <div class="row">
+      <div>
+        <label>推荐人数</label>
+        <select v-model.number="topN">
+          <option :value="3">前 3 名</option>
+          <option :value="5">前 5 名</option>
+          <option :value="8">前 8 名</option>
+        </select>
+      </div>
+      <div class="grow"></div>
+      <button class="primary" :disabled="loading || !jd.trim()" @click="run">
+        <span v-if="loading" class="spinner"></span>{{ loading ? 'AI 分析中…' : '✨ 智能推荐' }}
+      </button>
+    </div>
+    <div class="hint">简历库共 {{ resumeCount }} 份 · 由 AI 阅读全部简历后排序并说明推荐理由</div>
+    <div class="err" v-if="error">{{ error }}</div>
+  </div>
+
+  <div class="panel" v-if="result">
+    <div class="overall" v-if="result.overall">📋 {{ result.overall }}</div>
+    <div class="cards">
+      <div class="cand" v-for="(c, i) in result.recommendations" :key="c.resume_id">
+        <div class="cand-top">
+          <div class="rank">{{ i + 1 }}</div>
+          <div class="who">
+            <b>{{ c.name }}</b>
+            <div class="meta">{{ c.title }} · {{ c.resume.years }}年 · {{ c.resume.education }}</div>
+          </div>
+          <div class="score">
+            <div class="num" :style="{color: scoreColor(c.match_score)}">{{ c.match_score }}</div>
+            <div class="bar"><i :style="{width: c.match_score + '%'}"></i></div>
+          </div>
+        </div>
+
+        <div class="tags">
+          <span class="tag" v-for="s in c.resume.skills" :key="s">{{ s }}</span>
+        </div>
+
+        <div class="ai-sum" v-if="c.summary">“{{ c.summary }}”</div>
+
+        <div class="sec" v-if="c.reasons.length">
+          <div class="t">✅ 推荐理由</div>
+          <ul class="reasons ok"><li v-for="r in c.reasons" :key="r">{{ r }}</li></ul>
+        </div>
+        <div class="sec" v-if="c.gaps.length">
+          <div class="t">⚠️ 差距 / 风险</div>
+          <ul class="reasons gap"><li v-for="g in c.gaps" :key="g">{{ g }}</li></ul>
+        </div>
+
+        <details>
+          <summary>查看完整简历</summary>
+          <p>{{ c.resume.experience }}</p>
+        </details>
+      </div>
+    </div>
+    <div class="hint" v-if="!result.recommendations.length">没有匹配的候选人。</div>
+  </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+createApp({
+  data() {
+    return { jd: '', topN: 5, loading: false, error: '', result: null, cfg: null, resumeCount: 0 };
+  },
+  async mounted() {
+    try {
+      this.cfg = await (await fetch('/api/config')).json();
+      const list = await (await fetch('/api/resumes')).json();
+      this.resumeCount = list.length;
+    } catch (e) { /* 后端未启动时静默 */ }
+  },
+  methods: {
+    scoreColor(s) { return s >= 80 ? 'var(--ok)' : s >= 60 ? 'var(--warn)' : 'var(--bad)'; },
+    async run() {
+      this.loading = true; this.error = ''; this.result = null;
+      try {
+        const resp = await fetch('/api/recommend', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jd: this.jd, top_n: this.topN })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || '请求失败');
+        this.result = data;
+      } catch (e) { this.error = '出错了：' + e.message; }
+      finally { this.loading = false; }
+    }
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

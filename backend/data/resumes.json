@@ -1,0 +1,82 @@
+[
+  {
+    "id": "r001",
+    "name": "张伟",
+    "title": "高级后端工程师",
+    "years": 6,
+    "education": "本科 / 计算机科学",
+    "skills": ["Java", "Spring Boot", "MySQL", "Redis", "Kafka", "微服务", "Docker"],
+    "summary": "6年Java后端，主导过日订单百万级电商系统的微服务拆分。",
+    "experience": "某电商平台高级开发，负责订单与库存核心服务，将单体拆为12个微服务，QPS从2k提升至1.5w；设计基于Kafka的异步对账，故障率下降70%；带3人小组。"
+  },
+  {
+    "id": "r002",
+    "name": "李娜",
+    "title": "前端工程师",
+    "years": 4,
+    "education": "本科 / 软件工程",
+    "skills": ["JavaScript", "TypeScript", "Vue", "React", "Webpack", "Node.js"],
+    "summary": "4年前端，Vue/React双栈，做过低代码搭建平台。",
+    "experience": "负责企业中台前端，主导可视化表单引擎，沉淀40+业务组件；推动TypeScript改造，线上类型错误下降60%；熟悉性能优化与首屏加速。"
+  },
+  {
+    "id": "r003",
+    "name": "王强",
+    "title": "算法工程师 / NLP",
+    "years": 5,
+    "education": "硕士 / 人工智能",
+    "skills": ["Python", "PyTorch", "Transformer", "LLM", "RAG", "向量检索", "Milvus"],
+    "summary": "5年NLP算法，落地过企业知识库问答与RAG系统。",
+    "experience": "构建基于大模型的客服问答，结合RAG将答案准确率提升至89%；微调开源模型用于意图识别；熟悉DashScope/通义千问、Ollama本地部署。"
+  },
+  {
+    "id": "r004",
+    "name": "赵敏",
+    "title": "数据工程师",
+    "years": 7,
+    "education": "本科 / 统计学",
+    "skills": ["Python", "Spark", "Flink", "Hive", "ClickHouse", "数据仓库", "ETL"],
+    "summary": "7年大数据，搭建过PB级实时数仓。",
+    "experience": "负责集团实时数仓，基于Flink构建实时指标体系，覆盖200+看板；优化Spark任务使离线产出提前3小时；主导数据治理与血缘建设。"
+  },
+  {
+    "id": "r005",
+    "name": "陈晨",
+    "title": "全栈工程师",
+    "years": 3,
+    "education": "本科 / 计算机",
+    "skills": ["Python", "FastAPI", "Vue", "PostgreSQL", "Docker", "React"],
+    "summary": "3年全栈，独立交付过多个中小型SaaS产品。",
+    "experience": "以FastAPI+Vue独立开发SaaS排班系统，从0到1上线服务30+企业客户；熟悉容器化部署与CI/CD；能独立对接需求、设计接口与前端。"
+  },
+  {
+    "id": "r006",
+    "name": "刘洋",
+    "title": "DevOps / SRE 工程师",
+    "years": 8,
+    "education": "本科 / 网络工程",
+    "skills": ["Kubernetes", "Docker", "Prometheus", "Terraform", "CI/CD", "Linux", "Go"],
+    "summary": "8年运维/SRE，管理过千节点K8s集群。",
+    "experience": "负责公司基础设施，建设多云K8s平台,支撑500+服务;搭建Prometheus+Grafana监控与告警体系;推动IaC,环境交付从天级降到分钟级。"
+  },
+  {
+    "id": "r007",
+    "name": "孙丽",
+    "title": "产品经理",
+    "years": 5,
+    "education": "本科 / 工商管理",
+    "skills": ["需求分析", "原型设计", "Axure", "数据分析", "B端产品", "项目管理"],
+    "summary": "5年B端产品经理，负责过SaaS与中台产品。",
+    "experience": "主导企业协同SaaS的从0到1,累计付费企业800+;搭建产品数据指标体系,通过A/B测试将转化率提升25%;擅长跨团队协作与需求拆解。"
+  },
+  {
+    "id": "r008",
+    "name": "周杰",
+    "title": "Java 初级开发",
+    "years": 1.5,
+    "education": "大专 / 软件技术",
+    "skills": ["Java", "Spring Boot", "MySQL", "MyBatis"],
+    "summary": "1.5年Java开发，熟悉常规CRUD与SSM/Spring Boot。",
+    "experience": "参与企业内部管理系统开发,负责模块级功能与接口;熟悉MyBatis与基础SQL优化;有较强学习意愿,正在学习Redis与微服务。"
+  }
+]

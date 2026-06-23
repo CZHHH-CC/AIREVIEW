@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    image: jdreview:latest
+    container_name: jdreview-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    # 简历库挂载到宿主机，容器重建后数据不丢
+    volumes:
+      - ./backend/data:/app/backend/data
+    restart: unless-stopped
+
+  # 可选：本地大模型。需要时用 `docker compose --profile ollama up -d`
+  # 并在 backend/.env 设 LLM_PROVIDER=ollama、OLLAMA_BASE_URL=http://ollama:11434/v1
+  ollama:
+    image: ollama/ollama:latest
+    container_name: jdreview-ollama
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
